@@ -7,4 +7,5 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   android: { backgroundColor: '#080808' }
 };
+
 export default config;

@@ -1,16 +1,15 @@
-# FORJA 1.0
-Aplicación Android de crecimiento personal gamificada.
+# FORJA v2.0
 
-## Funciones
-- Misiones diarias
-- XP y niveles
-- Racha
-- 6 atributos: Físico, Mente, Disciplina, Finanzas, Relaciones y Control
-- Metas grandes con progreso
-- Misión Jefe
-- Coach práctico
-- Historial local
-- Funciona sin cuenta ni internet después de instalar
+Aplicación de crecimiento personal, metas diarias y seguimiento de progreso.
 
-## APK
-El workflow de GitHub Actions construye un APK Debug y lo publica como artifact.
+- Diseño oscuro minimalista inspirado en la referencia.
+- Logo FORJA integrado como SVG.
+- Inicio: nivel, XP, racha, misiones y misión jefe.
+- Metas: metas con acciones y progreso automático.
+- Calendario: historial diario por colores y detalle por fecha.
+- Progreso: seis atributos calculados desde actividad real.
+- Coach: recomendaciones prácticas.
+- Historial: días, porcentajes y XP.
+- Configuración: perfil, notificaciones, respaldo y restauración.
+- Datos persistidos localmente en el dispositivo.
+- Capacitor Android: com.forja.app.
