@@ -8,11 +8,10 @@ on:
 
 jobs:
   build:
-    name: Construir APK
+    name: Construir APK de FORJA
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Descargar código
         uses: actions/checkout@v4
 
@@ -33,13 +32,13 @@ jobs:
       - name: Construir aplicación web
         run: npm run build
 
-      - name: Crear proyecto Android con Capacitor
+      - name: Crear proyecto Android
         run: npx cap add android
 
       - name: Sincronizar Capacitor
         run: npx cap sync android
 
-      - name: Dar permisos a Gradle
+      - name: Preparar Gradle
         run: chmod +x android/gradlew
 
       - name: Compilar APK
