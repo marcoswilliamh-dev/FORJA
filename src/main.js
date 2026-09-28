@@ -1,109 +1,40 @@
 import './style.css';
 
-const KEY='forja_v1';
-const today=()=>new Date().toISOString().slice(0,10);
+const KEY='forja_v3';
+const A={fisico:['💪','Físico'],mente:['🧠','Mente'],disciplina:['🔥','Disciplina'],finanzas:['💰','Finanzas'],relaciones:['❤️','Relaciones'],control:['🧘','Control']};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-const fresh=()=>({
- profile:{name:'Guerrero',level:1,xp:0,streak:0,lastDay:null},
- goals:[{id:uid(),title:'Convertirme en mi mejor versión',area:'disciplina',target:30,progress:0,icon:'🔥'}],
- missions:[
-  {id:uid(),title:'Entrenar 30 minutos',area:'fisico',xp:40,done:false},
-  {id:uid(),title:'Leer 15 minutos',area:'mente',xp:20,done:false},
-  {id:uid(),title:'Completar una tarea difícil',area:'disciplina',xp:30,done:false},
-  {id:uid(),title:'Cuidar mis finanzas',area:'finanzas',xp:20,done:false},
-  {id:uid(),title:'Dedicar tiempo a mi familia',area:'relaciones',xp:20,done:false},
-  {id:uid(),title:'Dormir a una hora adecuada',area:'control',xp:30,done:false}
- ],
- history:{},
- stats:{fisico:0,mente:0,disciplina:0,finanzas:0,relaciones:0,control:0}
-});
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||fresh();
-const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
-const areas={fisico:['💪','Físico'],mente:['🧠','Mente'],disciplina:['🔥','Disciplina'],finanzas:['💰','Finanzas'],relaciones:['❤️','Relaciones'],control:['🧘','Control']};
-const app=document.querySelector('#app');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const need=()=>500+(data.profile.level-1)*150;
-const pct=()=>Math.min(100,Math.round(data.profile.xp/need()*100));
-const doneCount=()=>data.missions.filter(m=>m.done).length;
-function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1700)}
-function resetDay(){if(data.profile.lastDay!==today()){data.missions.forEach(m=>m.done=false);data.profile.lastDay=today();save()}}
-function nav(page){
- document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
- document.querySelector('#'+page).classList.add('active');
- document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
-}
-function shell(){
- resetDay();
- app.innerHTML=`<div class="app">
- <header><div class="brand"><span>⚡</span><div><b>FORJA</b><small>Tu vida. Tu misión.</small></div></div><button id="restart" class="ghost">↻</button></header>
- <main>
-  <section id="home" class="screen active"></section>
-  <section id="goals" class="screen"></section>
-  <section id="progress" class="screen"></section>
-  <section id="coach" class="screen"></section>
- </main>
- <nav class="nav">
-  <button class="active" data-page="home"><span>⌂</span>Hoy</button>
-  <button data-page="goals"><span>🎯</span>Metas</button>
-  <button data-page="progress"><span>🏆</span>Progreso</button>
-  <button data-page="coach"><span>🧠</span>Coach</button>
- </nav></div>`;
- document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>nav(b.dataset.page));
- document.querySelector('#restart').onclick=()=>{if(confirm('¿Reiniciar las misiones de hoy?')){data.missions.forEach(m=>m.done=false);save();renderHome()}};
- renderHome();renderGoals();renderProgress();renderCoach();
-}
-function renderHome(){
- const d=doneCount();
- document.querySelector('#home').innerHTML=`
- <div class="greeting"><div><small>BUENOS DÍAS,</small><h1>${esc(data.profile.name)} 👋</h1></div><div class="streak">🔥 <b>${data.profile.streak}</b><span>días</span></div></div>
- <section class="level"><div class="levelhead"><div><small>NIVEL ${data.profile.level}</small><h2>Forjando mi mejor versión</h2></div><strong>${data.profile.level<5?'🌱':data.profile.level<10?'⚔️':data.profile.level<20?'🔥':'👑'}</strong></div>
- <div class="xp"><b>⭐ ${data.profile.xp} XP</b><span>${need()} XP</span></div><div class="bar"><i style="width:${pct()}%"></i></div></section>
- <div class="section"><div><small>MISIÓN DE HOY</small><h2>${d}/${data.missions.length} completadas</h2></div><b>${Math.round(d/data.missions.length*100)}%</b></div>
- <div class="missions">${data.missions.map(m=>`<button class="mission ${m.done?'done':''}" data-id="${m.id}"><span class="check">${m.done?'✓':'○'}</span><div><b>${esc(m.title)}</b><small>${areas[m.area][0]} ${areas[m.area][1]} · +${m.xp} XP</small></div><span>›</span></button>`).join('')}</div>
- <button class="boss" id="boss"><span>⚔️</span><div><small>MISIÓN JEFE</small><b>Haz algo que estás evitando</b></div><strong>+100 XP</strong></button>
- <div class="quote">“ No necesitas motivación. Necesitas dar el siguiente paso.”</div>`;
- document.querySelectorAll('.mission').forEach(b=>b.onclick=()=>toggle(b.dataset.id));
- document.querySelector('#boss').onclick=boss;
-}
-function toggle(id){
- const m=data.missions.find(x=>x.id===id);if(!m)return;
- m.done=!m.done;
- if(m.done){data.profile.xp+=m.xp;data.stats[m.area]++;toast(`+${m.xp} XP ⚡`)}
- else{data.profile.xp=Math.max(0,data.profile.xp-m.xp);data.stats[m.area]=Math.max(0,data.stats[m.area]-1)}
- while(data.profile.xp>=need()){data.profile.xp-=need();data.profile.level++;toast(`🎉 NIVEL ${data.profile.level}`)}
- if(data.missions.every(x=>x.done)){data.profile.streak++;data.history[today()]={done:data.missions.length}}
- save();renderHome();renderProgress();
-}
-function boss(){
- const t=prompt('¿Qué estás evitando hacer hoy?');if(!t)return;
- data.profile.xp+=100;data.stats.disciplina++;data.history[today()]={...(data.history[today()]||{}),boss:t};
- while(data.profile.xp>=need()){data.profile.xp-=need();data.profile.level++}
- save();toast('⚔️ JEFE DERROTADO +100 XP');renderHome();renderProgress();
-}
-function renderGoals(){
- document.querySelector('#goals').innerHTML=`<div class="title"><small>CONSTRUYE TU FUTURO</small><h1>Mis metas 🎯</h1><button id="add" class="primary">+ Nueva meta</button></div>
- <div class="goals">${data.goals.map(g=>{const p=Math.min(100,Math.round(g.progress/g.target*100));return`<article class="goal"><div class="goalicon">${g.icon}</div><div class="goalbody"><div class="goalrow"><b>${esc(g.title)}</b><strong>${p}%</strong></div><small>${areas[g.area][0]} ${areas[g.area][1]}</small><div class="bar"><i style="width:${p}%"></i></div><small>${g.progress}/${g.target} días</small><button class="small" data-goal="${g.id}">+1 día cumplido</button></div></article>`}).join('')}</div>`;
- document.querySelector('#add').onclick=addGoal;
- document.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>advance(b.dataset.goal));
-}
-function addGoal(){
- const title=prompt('¿Qué quieres conseguir?');if(!title)return;
- const area=prompt('Área: fisico, mente, disciplina, finanzas, relaciones o control','disciplina')||'disciplina';
- data.goals.push({id:uid(),title,area:areas[area]?area:'disciplina',target:30,progress:0,icon:areas[area]?.[0]||'🎯'});
- save();renderGoals();toast('🎯 Meta creada');
-}
-function advance(id){const g=data.goals.find(x=>x.id===id);if(!g)return;g.progress=Math.min(g.target,g.progress+1);save();renderGoals();toast('🔥 Progreso registrado')}
-function renderProgress(){
- const entries=Object.entries(data.stats);
- document.querySelector('#progress').innerHTML=`<div class="title"><small>TU TRANSFORMACIÓN</small><h1>Progreso 🏆</h1></div>
- <section class="profile"><div class="avatar">${data.profile.level<5?'🌱':data.profile.level<10?'⚔️':data.profile.level<20?'🔥':'👑'}</div><div><small>NIVEL ${data.profile.level}</small><h2>${data.profile.level<5?'Aprendiz':data.profile.level<10?'Guerrero':data.profile.level<20?'Forjador':'Maestro'}</h2><p>Racha ${data.profile.streak} 🔥 · ${Object.keys(data.history).length} días registrados</p></div></section>
- <h3>ATRIBUTOS</h3><div class="attrs">${entries.map(([a,v])=>{const n=Math.min(100,v*5);return`<div class="attr"><span>${areas[a][0]}</span><div><b>${areas[a][1]}</b><small>${n}/100</small><div class="bar"><i style="width:${n}%"></i></div></div></div>`}).join('')}</div>`;
-}
-function renderCoach(){
- document.querySelector('#coach').innerHTML=`<div class="title"><small>COACH DE DISCIPLINA</small><h1>Coach 🧠</h1></div>
- <section class="coach"><div class="coachavatar">⚡</div><h2>Vamos a convertir problemas en acciones.</h2><p>No frases vacías. Un siguiente paso pequeño y concreto.</p>
- <div class="coachbuttons"><button data-m="ganas">😮‍💨 No tengo ganas</button><button data-m="procrastino">⏳ Procrastino</button><button data-m="falle">🔄 Fallé varios días</button><button data-m="disciplina">🔥 Quiero disciplina</button></div><div id="answer">Elige una opción.</div></section>`;
- const ans={ganas:'No necesitas ganas. Haz solo 5 minutos de la tarea más importante. La misión ahora es empezar.',procrastino:'Elige una sola tarea. Pon 10 minutos en el reloj y empieza sin buscar perfección.',falle:'No estás en cero. Mañana reduce la carga a 3 misiones y vuelve a construir la racha.',disciplina:'La disciplina se entrena cumpliendo promesas pequeñas. Hoy completa una misión difícil.'};
- document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>document.querySelector('#answer').innerHTML=`<b>⚡ FORJA DICE:</b><p>${ans[b.dataset.m]}</p>`);
-}
-shell();
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const logo=(n=50)=>'<svg class="logo" width="'+n+'" height="'+n+'" viewBox="0 0 100 100"><path fill="#F4C400" d="M50 5c4 12 18 17 18 30 0 5-2 9-5 12 10-2 20 5 20 17 0 17-14 29-33 29S17 81 17 64c0-11 7-20 17-23-2-9 3-19 12-26l4-10Z"/><path fill="#080808" d="M31 49c0-9 8-15 19-15s19 6 19 15v11c0 9-8 14-19 14s-19-5-19-14V49Z"/><path fill="#F4C400" d="m40 52 8 5-8 5zm20 0-8 5 8 5z"/></svg>';
+const fresh=()=>({profile:{name:'Guerrero'},xp:0,streak:0,streakDay:null,history:{},settings:{notifications:true,streak:true,goals:true,coach:true,sound:false},missions:[
+{id:uid(),title:'Entrenar 30 minutos',area:'fisico',xp:40},{id:uid(),title:'Leer 20 minutos',area:'mente',xp:20},{id:uid(),title:'Completar una tarea difícil',area:'disciplina',xp:30},{id:uid(),title:'Cuidar mis finanzas',area:'finanzas',xp:20},{id:uid(),title:'Dedicar tiempo a mi familia',area:'relaciones',xp:20},{id:uid(),title:'Practicar autocontrol',area:'control',xp:30},{id:uid(),title:'Ordenar mi espacio',area:'disciplina',xp:10},{id:uid(),title:'Dormir a una hora adecuada',area:'control',xp:20}],goals:[{id:uid(),title:'Convertirme en mi mejor versión',area:'disciplina',icon:'🎯',actions:[{id:uid(),title:'Entrenar 30 minutos',xp:20,done:false},{id:uid(),title:'Leer 20 minutos',xp:20,done:false},{id:uid(),title:'Ahorrar una cantidad',xp:20,done:false}]}]});
+let d=JSON.parse(localStorage.getItem(KEY)||'null')||fresh();
+const save=()=>localStorage.setItem(KEY,JSON.stringify(d));
+const level=()=>Math.floor(d.xp/500)+1;
+const day=()=>d.history[today()]||(d.history[today()]={m:{},a:{},boss:false,bossText:'',xp:0});
+const percent=h=>{const total=d.missions.length+(h.boss?1:0),done=Object.values(h.m||{}).filter(Boolean).length+(h.boss?1:0);return total?Math.round(done/total*100):0};
+const toast=t=>{const x=document.createElement('div');x.className='toast';x.innerHTML=t;document.body.append(x);setTimeout(()=>x.remove(),1800)};
+function award(x){d.xp+=x;toast('<b>+'+x+' XP</b> ⚡')}
+function nav(p){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='calendar')calendar();if(p==='history')history();if(p==='settings')settings()}
+function mission(id){const h=day(),m=d.missions.find(x=>x.id===id);if(!m)return;if(h.m[id]){h.m[id]=false;h.xp-=m.xp;d.xp=Math.max(0,d.xp-m.xp)}else{h.m[id]=true;h.xp+=m.xp;award(m.xp)}if(percent(h)===100){const prev=new Date();prev.setDate(prev.getDate()-1);const p=prev.toISOString().slice(0,10);if(d.streakDay!==today()){d.streak=d.streakDay===p?(d.streak||0)+1:1;d.streakDay=today()}}save();render()}
+function boss(){const h=day();if(h.boss)return;const t=prompt('¿Qué estás evitando hacer hoy?');if(!t)return;h.boss=true;h.bossText=t;h.xp+=100;award(100);save();render()}
+function goalAction(gid,aid){const g=d.goals.find(x=>x.id===gid),a=g&&g.actions.find(x=>x.id===aid);if(!a)return;const h=day(),k=gid+':'+aid;if(a.done){a.done=false;h.a[k]=false;h.xp-=a.xp;d.xp=Math.max(0,d.xp-a.xp)}else{a.done=true;h.a[k]=true;h.xp+=a.xp;award(a.xp)}save();render()}
+function addGoal(){const t=prompt('Nombre de la meta');if(!t)return;const ar=(prompt('Área: fisico, mente, disciplina, finanzas, relaciones o control','disciplina')||'disciplina').toLowerCase();const g={id:uid(),title:t,area:A[ar]?ar:'disciplina',icon:A[ar]?A[ar][0]:'🎯',actions:[]};for(let i=1;i<=3;i++){const a=prompt('Acción '+i+' (Cancelar para terminar)');if(!a)break;g.actions.push({id:uid(),title:a,xp:20,done:false})}if(!g.actions.length)g.actions.push({id:uid(),title:'Primer paso',xp:20,done:false});d.goals.push(g);save();render();toast('🎯 Meta creada')}
+function render(){home();goals();progress();coach();calendar();history();settings()}
+function home(){const h=day(),done=Object.values(h.m).filter(Boolean).length,p=percent(h),lv=level();let s='<div class="hero"><div><small>BUENOS DÍAS</small><h1>'+esc(d.profile.name)+'</h1></div><div class="streak">🔥 '+(d.streak||0)+'<small>días</small></div></div>';
+s+='<section class="level"><div><small>NIVEL '+lv+'</small><h2>'+(lv<5?'APRENDIZ':lv<10?'GUERRERO':lv<20?'FORJADOR':'MAESTRO')+'</h2></div>'+logo(58)+'<div class="xp"><b>⭐ '+(d.xp%500)+' XP</b><span>500 XP</span></div><div class="bar"><i style="width:'+(d.xp%500)/5+'%"></i></div></section>';
+s+='<div class="sectionHead"><div><small>PROGRESO DE HOY</small><h2>'+done+'/'+d.missions.length+' misiones</h2></div><div class="ring" style="--p:'+p*3.6+'deg"><b>'+p+'%</b></div></div><div class="missions">';
+d.missions.forEach(m=>s+='<button class="mission '+(h.m[m.id]?'done':'')+'" data-m="'+m.id+'"><span class="check">'+(h.m[m.id]?'✓':'○')+'</span><div><b>'+esc(m.title)+'</b><small>'+A[m.area][0]+' '+A[m.area][1]+'</small></div><strong>+'+m.xp+'</strong></button>');
+s+='</div><button class="boss '+(h.boss?'done':'')+'" id="boss">'+logo(42)+'<div><small>MISIÓN JEFE</small><b>'+(h.boss?esc(h.bossText):'Haz algo que estás evitando')+'</b></div><strong>'+(h.boss?'✓':'+100 XP')+'</strong></button>';
+s+='<div class="quick"><button data-page="calendar">📅<b>Mi avance</b><small>Calendario</small></button><button data-page="history">📜<b>Historial</b><small>'+Object.keys(d.history).length+' días</small></button></div>';
+document.querySelector('#home').innerHTML=s;document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>mission(b.dataset.m));document.querySelector('#boss').onclick=boss;document.querySelectorAll('#home [data-page]').forEach(b=>b.onclick=()=>nav(b.dataset.page))}
+function goals(){let s='<div class="title"><div><small>TU FUTURO SE CONSTRUYE HOY</small><h1>Metas 🎯</h1></div><button class="primary" id="newGoal">+ Meta</button></div><div class="goalList">';d.goals.forEach(g=>{const n=g.actions.length,z=g.actions.filter(a=>a.done).length,p=n?Math.round(z/n*100):0;s+='<article class="goalCard"><div class="goalHead"><span>'+g.icon+'</span><div><b>'+esc(g.title)+'</b><small>'+A[g.area][0]+' '+A[g.area][1]+'</small></div><strong>'+p+'%</strong></div><div class="bar"><i style="width:'+p+'%"></i></div><small>'+z+'/'+n+' acciones</small><div class="actions">';g.actions.forEach(a=>s+='<button class="'+(a.done?'done':'')+'" data-a="'+g.id+'|'+a.id+'"><span>'+(a.done?'✓':'○')+'</span>'+esc(a.title)+'<em>+'+a.xp+'</em></button>');s+='</div><button class="addAction" data-add="'+g.id+'">+ Añadir acción</button></article>'});s+='</div>';document.querySelector('#goals').innerHTML=s;document.querySelector('#newGoal').onclick=addGoal;document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const x=b.dataset.a.split('|');goalAction(x[0],x[1])});document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const g=d.goals.find(x=>x.id===b.dataset.add),t=prompt('Nueva acción');if(t){g.actions.push({id:uid(),title:t,xp:20,done:false});save();render()}})}
+function progress(){const stat={};Object.keys(A).forEach(x=>stat[x]=0);Object.values(d.history).forEach(h=>{Object.keys(h.m||{}).forEach(id=>{if(h.m[id]){const m=d.missions.find(x=>x.id===id);if(m)stat[m.area]++}});Object.keys(h.a||{}).forEach(k=>{const g=d.goals.find(x=>k.indexOf(x.id+':')===0);if(g){const a=g.actions.find(x=>k===g.id+':'+x.id);if(a&&h.a[k])stat[g.area]++}});if(h.boss)stat.disciplina++});let s='<div class="title"><small>TU TRANSFORMACIÓN</small><h1>Progreso 📊</h1></div><section class="summary">'+logo(55)+'<div><small>NIVEL '+level()+'</small><h2>'+(level()<5?'Aprendiz':level()<10?'Guerrero':level()<20?'Forjador':'Maestro')+'</h2><p>🔥 '+(d.streak||0)+' días · ⭐ '+d.xp+' XP</p></div></section><h3>ATRIBUTOS</h3><div class="attrs">';Object.keys(A).forEach(k=>{const p=Math.min(100,stat[k]*10);s+='<div class="attr"><span>'+A[k][0]+'</span><div><b>'+A[k][1]+'</b><small>'+p+'%</small><div class="bar"><i style="width:'+p+'%"></i></div></div></div>'});s+='</div><div class="stats"><div><b>'+Object.keys(d.history).length+'</b><small>Días activos</small></div><div><b>'+d.xp+'</b><small>XP total</small></div><div><b>'+Object.values(d.history).reduce((n,h)=>n+Object.values(h.m||{}).filter(Boolean).length,0)+'</b><small>Misiones</small></div><div><b>'+(d.streak||0)+'</b><small>Racha</small></div></div>';document.querySelector('#progress').innerHTML=s}
+function coach(){document.querySelector('#coach').innerHTML='<div class="coachHero">'+logo(75)+'<div><small>COACH FORJA</small><h1>Tu siguiente paso</h1></div></div><section class="coachCard"><h2>Convierte intención en acción.</h2><p>El coach usa tu progreso real para proponerte un paso concreto.</p><button class="primary" id="coachGo">Ver misiones</button></section><div class="choices"><button data-c="a">😮‍💨 No tengo ganas</button><button data-c="b">⏳ Procrastino</button><button data-c="c">🔄 Fallé varios días</button><button data-c="d">🔥 Quiero disciplina</button></div><div id="answer" class="answer">Elige una situación.</div>';const x={a:'Haz solo 5 minutos. Tu misión ahora es empezar.',b:'Elige una tarea y pon 10 minutos sin distracciones.',c:'Reinicia pequeño: completa 3 misiones hoy.',d:'Haz una promesa pequeña que puedas cumplir incluso sin ganas.'};document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>document.querySelector('#answer').innerHTML='<b>⚡ FORJA:</b><p>'+x[b.dataset.c]+'</p>');document.querySelector('#coachGo').onclick=()=>nav('home')}
+let cm=new Date();
+function calendar(){const y=cm.getFullYear(),m=cm.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),start=(first.getDay()+6)%7;let c='';for(let i=0;i<start;i++)c+='<span class="day muted"></span>';for(let i=1;i<=days;i++){const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(i).padStart(2,'0'),h=d.history[k],p=h?percent(h):0;c+='<button class="day '+(h?(p===100?'complete':p>=50?'partial':'failed'):'none')+(k===today()?' today':'')+'" data-day="'+k+'"><b>'+i+'</b><i></i></button>'}document.querySelector('#calendar').innerHTML='<div class="calendarTitle"><button id="prev">‹</button><div><small>MI AVANCE</small><h1>'+new Intl.DateTimeFormat('es-PE',{month:'long',year:'numeric'}).format(new Date(y,m,1))+'</h1></div><button id="next">›</button></div><div class="calendarBox"><div class="week"><b>L</b><b>M</b><b>M</b><b>J</b><b>V</b><b>S</b><b>D</b></div><div class="days">'+c+'</div><div class="legend">🟢 Completo　🟡 Parcial　🔴 Fallido　⚪ Sin actividad</div></div><div id="detail" class="detail">Toca un día para ver exactamente qué hiciste.</div>';document.querySelector('#prev').onclick=()=>{cm=new Date(y,m-1,1);calendar()};document.querySelector('#next').onclick=()=>{cm=new Date(y,m+1,1);calendar()};document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>showDay(b.dataset.day))}
+function showDay(k){const h=d.history[k]||{m:{},xp:0,boss:false};let s='<div class="detailHead"><div><small>'+k+'</small><h2>'+percent(h)+'% completado</h2></div><b>+'+(h.xp||0)+' XP</b></div>';d.missions.forEach(m=>s+='<div class="detailRow"><span class="'+(h.m[m.id]?'ok':'')+'">'+(h.m[m.id]?'✓':'○')+'</span>'+esc(m.title)+'<em>'+(h.m[m.id]?'+':'0')+m.xp+' XP</em></div>');if(h.boss)s+='<div class="detailRow"><span class="ok">✓</span>Misión jefe: '+esc(h.bossText)+'<em>+100 XP</em></div>';document.querySelector('#detail').innerHTML=s}
+function history(){let s='<div class="title"><small>TU CAMINO</small><h1>Historial 📜</h1></div><div class="tabs"><button class="active">Días</button><button>Misiones</button><button>Rachas</button></div>';Object.keys(d.history).sort().reverse().forEach(k=>{const h=d.history[k],p=percent(h);s+='<button class="historyRow" data-h="'+k+'"><span class="dot '+(p===100?'complete':p>=50?'partial':p?'failed':'none')+'"></span><div><b>'+k+'</b><small>'+Object.values(h.m||{}).filter(Boolean).length+'/'+d.missions.length+' misiones</small></div><strong>'+p+'%</strong><em>+'+(h.xp||0)+' XP</em></button>'});document.querySelector('#history').innerHTML=s||'<div class="empty">Aún no hay días registrados.</div>';document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{cm=new Date(b.dataset.h+'T12:00:00');nav('calendar');setTimeout(()=>showDay(b.dataset.h),50)})}
+function settings(){document.querySelector('#settings').innerHTML='<div class="title"><small>FORJA</small><h1>Configuración ⚙</h1></div><section class="profile" id="edit">'+logo(55)+'<div><b>'+esc(d.profile.name)+'</b><small>Nivel '+level()+' · '+d.xp+' XP</small></div><button>Editar</button></section><div class="settings"><label>🔔 <span>Notificaciones<small>Recordatorios diarios</small></span><input type="checkbox" id="n" '+(d.settings.notifications?'checked':'')+'></label><label>🔥 <span>Alertas de racha<small>Avisos de tu racha</small></span><input type="checkbox" id="s" '+(d.settings.streak?'checked':'')+'></label><label>🎯 <span>Alertas de metas<small>Progreso</small></span><input type="checkbox" id="g" '+(d.settings.goals?'checked':'')+'></label><label>🧠 <span>Coach<small>Recomendaciones</small></span><input type="checkbox" id="c" '+(d.settings.coach?'checked':'')+'></label><label>🔊 <span>Sonido<small>Confirmaciones</small></span><input type="checkbox" id="so" '+(d.settings.sound?'checked':'')+'></label><button id="export">☁️ <span>Datos y respaldo<small>Exportar JSON</small></span>›</button><button id="import">↩️ <span>Restaurar datos<small>Importar JSON</small></span>›</button><button id="reset" class="danger">🗑️ <span>Eliminar datos<small>Empezar de nuevo</small></span>›</button></div>';document.querySelector('#edit').onclick=()=>{const n=prompt('Tu nombre',d.profile.name);if(n){d.profile.name=n;save();render()}};[['n','notifications'],['s','streak'],['g','goals'],['c','coach'],['so','sound']].forEach(x=>document.querySelector('#'+x[0]).onchange=e=>{d.settings[x[1]]=e.target.checked;save()});document.querySelector('#export').onclick=()=>{const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='forja-respaldo.json';a.click();URL.revokeObjectURL(u)};document.querySelector('#import').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=()=>{const r=new FileReader();r.onload=()=>{try{d=JSON.parse(r.result);save();render()}catch{toast('Archivo inválido')}};r.readAsText(i.files[0])};i.click()};document.querySelector('#reset').onclick=()=>{if(confirm('¿Borrar todos los datos?')){d=fresh();save();render()}}}
+document.querySelector('#app').innerHTML='<div class="app"><header><button class="brand" data-page="home">'+logo(38)+'<span><b>FORJA</b><small>Fórjate cada día.</small></span></button><button class="icon" data-page="settings">⚙</button></header><main><section id="home" class="screen active"></section><section id="goals" class="screen"></section><section id="calendar" class="screen"></section><section id="progress" class="screen"></section><section id="coach" class="screen"></section><section id="history" class="screen"></section><section id="settings" class="screen"></section></main><nav class="nav"><button data-page="home"><span>⌂</span>Inicio</button><button data-page="goals"><span>◎</span>Metas</button><button data-page="calendar"><span>▦</span>Calendario</button><button data-page="progress"><span>▥</span>Progreso</button><button data-page="coach"><span>♙</span>Coach</button></nav></div>';
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>nav(b.dataset.page));render();
