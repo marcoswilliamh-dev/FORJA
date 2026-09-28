@@ -29,11 +29,17 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
+      - name: Instalar generador de iconos
+        run: npm install --save-dev @capacitor/assets
+
       - name: Construir aplicación web
         run: npm run build
 
       - name: Crear proyecto Android
         run: npx cap add android
+
+      - name: Generar iconos Android de FORJA
+        run: npx capacitor-assets generate --android
 
       - name: Sincronizar Capacitor
         run: npx cap sync android
@@ -44,6 +50,7 @@ jobs:
       - name: Compilar APK
         run: |
           cd android
+          ./gradlew clean
           ./gradlew assembleDebug
 
       - name: Guardar APK
