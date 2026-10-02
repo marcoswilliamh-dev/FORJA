@@ -38,7 +38,7 @@ jobs:
       - name: Crear proyecto Android
         run: npx cap add android
 
-      - name: Generar iconos Android de FORJA
+      - name: Generar icono de FORJA
         run: npx capacitor-assets generate --android
 
       - name: Sincronizar Capacitor
@@ -47,10 +47,14 @@ jobs:
       - name: Preparar Gradle
         run: chmod +x android/gradlew
 
-      - name: Compilar APK
+      - name: Limpiar proyecto Android
         run: |
           cd android
           ./gradlew clean
+
+      - name: Compilar APK
+        run: |
+          cd android
           ./gradlew assembleDebug
 
       - name: Guardar APK
